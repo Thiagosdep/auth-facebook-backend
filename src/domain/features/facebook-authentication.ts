@@ -6,7 +6,7 @@ export interface FacebookAuthentication {
 }
 
 // Evitar conflito de nomenclatura (Params) em futuras features
-namespace FacebookAuthentication {
+export namespace FacebookAuthentication {
   // Command Pattern
   export type Params = {
     token: string
