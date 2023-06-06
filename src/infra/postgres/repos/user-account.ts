@@ -3,7 +3,9 @@ import { PgUser } from '@/infra/postgres/entities'
 
 import { getRepository } from 'typeorm'
 
-export class PostgresUserAccountRepository implements LoadUserAccountRepository, SaveFacebookAccountRepository {
+type PostgresUserAccountRepositoryImplementation =
+  LoadUserAccountRepository & SaveFacebookAccountRepository
+export class PostgresUserAccountRepository implements PostgresUserAccountRepositoryImplementation {
   private readonly pgUserRepo = getRepository(PgUser)
 
   async load(params: LoadUserAccountRepository.Params): Promise<LoadUserAccountRepository.Result> {
