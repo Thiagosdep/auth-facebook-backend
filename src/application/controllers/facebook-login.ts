@@ -3,12 +3,19 @@ import { AccessToken } from '@/domain/models'
 import { HttpResponse, badRequest, ok, serverError, unauthorized } from '@/application/helpers'
 import { RequiredFieldError } from '@/application/errors'
 
+type HttpRequest = {
+  token: string | undefined | null
+}
+
+type Model = Error | {
+  accessToken: string
+}
 export class FacebookLoginController {
   constructor(private readonly facebookAuthentication: FacebookAuthentication) {}
 
-  async handle(httpRequest: any): Promise<HttpResponse> {
+  async handle(httpRequest: HttpRequest): Promise<HttpResponse<Model>> {
     try {
-      if (['', null, undefined].includes(httpRequest.token)) {
+      if (httpRequest.token === '' || httpRequest.token === undefined || httpRequest.token === null) {
         return badRequest(new RequiredFieldError('token'))
       }
       const accessToken = await this.facebookAuthentication.perform({ token: httpRequest.token })
