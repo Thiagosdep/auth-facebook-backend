@@ -8,28 +8,43 @@ class FacebookLoginController {
   constructor(private readonly facebookAuthentication: FacebookAuthentication) {}
 
   async handle(httpRequest: any): Promise<HttpResponse> {
-    if (['', null, undefined].includes(httpRequest.token)) {
-      return {
-        statusCode: 400,
-        data: new Error('the field token is required')
+    try {
+      if (['', null, undefined].includes(httpRequest.token)) {
+        return {
+          statusCode: 400,
+          data: new Error('the field token is required')
+        }
       }
-    }
-    const result = await this.facebookAuthentication.perform({ token: httpRequest.token })
-    if (result instanceof AccessToken) {
-      return {
-        statusCode: 200,
-        data: { accessToken: result.value }
+      const result = await this.facebookAuthentication.perform({ token: httpRequest.token })
+      if (result instanceof AccessToken) {
+        return {
+          statusCode: 200,
+          data: { accessToken: result.value }
+        }
+      } else {
+        return {
+          statusCode: 401,
+          data: result
+        }
       }
-    } else {
+    } catch (error) {
       return {
-        statusCode: 401,
-        data: result
+        statusCode: 500,
+        data: new ServerError(error instanceof Error ? error : undefined)
       }
     }
   }
 }
 
 type HttpResponse = { statusCode: number, data: any }
+
+class ServerError extends Error {
+  constructor(error?: Error) {
+    super('Server failed. Try again soon')
+    this.name = 'ServerError'
+    this.stack = error?.stack
+  }
+}
 
 describe('FacebookLoginController', () => {
   let sut: FacebookLoginController
@@ -96,6 +111,17 @@ describe('FacebookLoginController', () => {
       data: {
         accessToken: 'any_value'
       }
+    })
+  })
+
+  it('should return 500 if authentication throws', async () => {
+    const error = new Error('infra_error')
+    facebookAuth.perform.mockRejectedValueOnce(error)
+    const httpResponse = await sut.handle({ token: 'any_token' })
+
+    expect(httpResponse).toEqual({
+      statusCode: 500,
+      data: new ServerError(error)
     })
   })
 })
